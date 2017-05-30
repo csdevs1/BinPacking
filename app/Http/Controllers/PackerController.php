@@ -122,7 +122,84 @@ class PackerController extends Controller
   /*
    * To just see if a selection of items will fit into one specific box
    */
+        
         $box = new TestBox('Vehiculo 1', 300, 300, 10, 10, 296, 296, 8, 1000);
+        $packer = new Packer();
+        $packer->addBox(new TestBox('Vehiculo 1', 300, 300, 10, 10, 296, 296, 8, 1000));
+
+        $items = new ItemList();  
+        $facturas=array(
+            'factura1'=>[
+                ['nombre'=>'Caja 1','width'=>300, 'length'=>296, 'depth'=>2, 'weight'=>200, 'keepFlat'=>true,'factura'=>'factura1'],
+                ['nombre'=>'Caja 2','width'=>207, 'length'=>296, 'depth'=>2, 'weight'=>500, 'keepFlat'=>true,'factura'=>'factura1'],
+                ['nombre'=>'Caja 3','width'=>300, 'length'=>296, 'depth'=>4, 'weight'=>290, 'keepFlat'=>true,'factura'=>'factura1']
+            ],
+            'factura2'=>[
+                ['nombre'=>'Caja 4','width'=>207, 'length'=>296, 'depth'=>2, 'weight'=>200, 'keepFlat'=>true,'factura'=>'factura2'],
+                ['nombre'=>'Caja 5','width'=>207, 'length'=>296, 'depth'=>4, 'weight'=>290, 'keepFlat'=>true,'factura'=>'factura2']
+            ],
+            'factura3'=>[
+                ['nombre'=>'Caja 6','width'=>207, 'length'=>296, 'depth'=>2, 'weight'=>200, 'keepFlat'=>true,'factura'=>'factura3'],
+                ['nombre'=>'Caja 7','width'=>290, 'length'=>296, 'depth'=>2, 'weight'=>500, 'keepFlat'=>true,'factura'=>'factura3'],
+                ['nombre'=>'Caja 8','width'=>2007, 'length'=>296, 'depth'=>4, 'weight'=>290, 'keepFlat'=>true,'factura'=>'factura3']
+            ]
+        );
+        $i=array();
+        $arr=array();
+        $arr2=array(); // Array to store item description returned from Packer, it's used to check if value 'nombre' from factura is not present in arr2 (these values are the items that don't fit in a vehicle)
+        $del_k=array();
+        $not_assigned=array();
+        foreach($facturas as $key=>$val){
+            foreach($facturas[$key] as $k=>$v){
+                //$packer->addItem(new TestItem($v['nombre'], $v['width'], $v['length'], $v['depth'], $v['weight'], $v['keepFlat']));
+                $items->insert(new TestItem($v['nombre'], $v['width'], $v['length'], $v['depth'], $v['weight'], $v['keepFlat']));
+                //$packedBox = $packer->pack();
+                $volumePacker = new VolumePacker($box, $items);
+                $packedBox = $volumePacker->pack();
+                //var_dump($packedBox);
+                foreach ($packedBox->items as $item) {
+                    if(!in_array($item, $arr, true)){
+                        $item=(array)$item;
+                        $item['factura']=$key;
+                        array_push($arr, $item);
+                    }
+                }
+                foreach($arr as $key1=>$val1){
+                    if(!in_array($val1, $i, true)){
+                        array_push($i,$val1);
+                    }
+                }
+            }
+            
+            foreach($facturas[$key] as $k=>$v){
+                foreach($i as $key2=>$val2){
+                   if(!in_array($val2['description'],$arr2, true)){
+                       array_push($arr2,$val2['description']);
+                   }
+                }
+                if(!in_array($v['nombre'],$arr2, true)){
+                    foreach($i as $key2=>$val2){
+                        if(in_array($key,$val2, true)){
+                            if(!in_array($key2,$del_k, true)){
+                                if(!in_array($key,$not_assigned, true)){
+                                    array_push($not_assigned,$facturas[$key]);
+                                }
+                                array_push($del_k,$key2);
+                                //array_push($not_assigned,$facturas[$key2]);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        foreach($del_k as $k){
+            unset($i[$k]);
+        }
+        var_dump($not_assigned);
+        $response=array($packedBox->box,$i);
+        echo json_encode($response);
+        
+   /*   $box = new TestBox('Vehiculo 1', 300, 300, 10, 10, 296, 296, 8, 1000);
         $packer = new Packer();
         $packer->addBox(new TestBox('Vehiculo 1', 300, 300, 10, 10, 296, 296, 8, 1000));
 
@@ -191,6 +268,6 @@ class PackerController extends Controller
             unset($i[$k]);
         }
         $response=array($packedBox->box,$i);
-        echo json_encode($response);
+        echo json_encode($response);*/
     }
 }
