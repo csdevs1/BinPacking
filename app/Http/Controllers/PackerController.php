@@ -93,15 +93,16 @@ class PackerController extends Controller
   /*
    * To figure out which boxes you need, and which items go into which box
    */
-  $packer = new Packer();
-  $packer->addBox(new TestBox('Le petite box', 30000, 30000, 100, 100, 2960, 2960, 8, 22000));
-  $packer->addBox(new TestBox('Le grande box', 3000, 3000, 150, 150, 2960, 2960, 80, 10000));
-  $packer->addItem(new TestItem('Item 1', 50, 50, 20, 15000, true));
-  $packer->addItem(new TestItem('Item 2', 50, 50, 20, 200, false));
-  $packer->addItem(new TestItem('Item 3', 50, 50, 20, 200, true)); // you can even choose if an item needs to be kept flat (packed "this way up")
-  $packedBoxes = $packer->pack();
+        $packer = new Packer();
+        $packer->addBox(new TestBox('Le petite box', 300, 300, 10, 10, 296, 296, 8, 1000));
+        $packer->addBox(new TestBox('Le grande box', 300, 300, 100, 100, 2960, 2960, 80, 10000));
+        $packer->addBox(new TestBox('Le grande box 1', 300, 300, 100, 100, 2960, 2960, 80, 10000));
+        $packer->addItem(new TestItem('Item 1', 250, 250, 12, 200, false));
+        $packer->addItem(new TestItem('Item 2', 250, 250, 12, 200, false));
+        $packer->addItem(new TestItem('Item 3', 250, 250, 24, 200, true)); // you can even choose if an item needs to be kept flat (packed "this way up")
+        $packedBoxes = $packer->pack();
 
-  echo("These items fitted into " . count($packedBoxes) . " box(es)" . PHP_EOL);
+  /*echo("These items fitted into " . count($packedBoxes) . " box(es)" . PHP_EOL);
   foreach ($packedBoxes as $packedBox) {
     $boxType = $packedBox->getBox(); // your own box object, in this case TestBox
     echo("This box is a {$boxType->getReference()}, it is {$boxType->getOuterWidth()}mm wide, {$boxType->getOuterLength()}mm long and {$boxType->getOuterDepth()}mm high" . PHP_EOL);
@@ -115,21 +116,81 @@ class PackerController extends Controller
 
     echo(PHP_EOL);
   }
-
+*/
 
 
   /*
    * To just see if a selection of items will fit into one specific box
    */
-  $box = new TestBox('Le box', 300, 300, 10, 10, 296, 296, 8, 1000);
+        $box = new TestBox('Vehiculo 1', 300, 300, 10, 10, 296, 296, 8, 1000);
+        $packer = new Packer();
+        $packer->addBox(new TestBox('Vehiculo 1', 300, 300, 10, 10, 296, 296, 8, 1000));
 
-  $items = new ItemList();
-  $items->insert(new TestItem('Item 1', 297, 296, 2, 200, true));
-  $items->insert(new TestItem('Item 2', 297, 296, 2, 500, true));
-  $items->insert(new TestItem('Item 3', 296, 296, 4, 290, true));
-
-  $volumePacker = new VolumePacker($box, $items);
-  $packedBox = $volumePacker->pack();
-  /* $packedBox->getItems() contains the items that fit */
+        $items = new ItemList();  
+        $facturas=array(
+            'factura1'=>[
+                ['nombre'=>'Caja 1','width'=>300, 'length'=>296, 'depth'=>2, 'weight'=>200, 'keepFlat'=>true],
+                ['nombre'=>'Caja 2','width'=>207, 'length'=>296, 'depth'=>2, 'weight'=>500, 'keepFlat'=>true],
+                ['nombre'=>'Caja 3','width'=>300, 'length'=>296, 'depth'=>4, 'weight'=>290, 'keepFlat'=>true]
+            ],
+            'factura2'=>[
+                ['nombre'=>'Caja 4','width'=>207, 'length'=>296, 'depth'=>2, 'weight'=>200, 'keepFlat'=>true],
+                ['nombre'=>'Caja 5','width'=>207, 'length'=>296, 'depth'=>4, 'weight'=>290, 'keepFlat'=>true]
+            ],
+            'factura3'=>[
+                ['nombre'=>'Caja 6','width'=>207, 'length'=>296, 'depth'=>2, 'weight'=>200, 'keepFlat'=>true],
+                ['nombre'=>'Caja 7','width'=>290, 'length'=>296, 'depth'=>2, 'weight'=>500, 'keepFlat'=>true],
+                ['nombre'=>'Caja 8','width'=>207, 'length'=>296, 'depth'=>4, 'weight'=>290, 'keepFlat'=>true]
+            ]
+        );
+        $i=array();
+        $arr=array();
+        $arr2=array();
+        $del_k=array();
+        $_assigned=array();
+        foreach($facturas as $key=>$val){
+            foreach($facturas[$key] as $k=>$v){
+                //$packer->addItem(new TestItem($v['nombre'], $v['width'], $v['length'], $v['depth'], $v['weight'], $v['keepFlat']));
+                $items->insert(new TestItem($v['nombre'], $v['width'], $v['length'], $v['depth'], $v['weight'], $v['keepFlat']));
+                //$packedBox = $packer->pack();
+                $volumePacker = new VolumePacker($box, $items);
+                $packedBox = $volumePacker->pack();
+                //var_dump($packedBox);
+                foreach ($packedBox->items as $item) {
+                    if(!in_array($item, $arr, true)){
+                        $item=(array)$item;
+                        $item['factura']=$key;
+                        array_push($arr, $item);
+                    }
+                }
+                foreach($arr as $key1=>$val1){
+                    if(!in_array($val1, $i, true)){
+                        array_push($i,$val1);
+                    }
+                }
+            }
+            
+            foreach($facturas[$key] as $k=>$v){
+                foreach($i as $key2=>$val2){
+                   if(!in_array($val2['description'],$arr2, true)){
+                       array_push($arr2,$val2['description']);
+                   }
+                }
+                if(!in_array($v['nombre'],$arr2, true)){
+                    foreach($i as $key2=>$val2){
+                        if(in_array($key,$val2, true)){
+                            if(!in_array($key2,$del_k, true)){
+                                array_push($del_k,$key2);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        foreach($del_k as $k){
+            unset($i[$k]);
+        }
+        $response=array($packedBox->box,$i);
+        echo json_encode($response);
     }
 }
